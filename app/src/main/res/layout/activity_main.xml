@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:ignore="HardcodedText"
+    android:background="#fff">
+
+    <com.airbnb.lottie.LottieAnimationView
+        android:id="@+id/confetti_animation_lottie"
+        android:layout_width="500dp"
+        android:layout_height="match_parent"
+        app:lottie_rawRes="@raw/confetti"
+        app:lottie_loop="false"
+        android:visibility="invisible"
+        android:layout_centerInParent="true" />
+
+
+    <TextView
+        android:id="@+id/result_text_view"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:text="Result : 10"
+        android:layout_margin="10dp"
+        android:gravity="center_horizontal"
+        android:textSize="23sp"
+        android:layout_above="@+id/start_button"
+        android:layout_centerHorizontal="true"
+        android:textColor="@color/colorAccent"/>
+
+
+
+    <RelativeLayout
+        android:id="@+id/parent_circle_relative_layout"
+        android:layout_width="match_parent"
+        android:layout_height="500dp"
+        android:gravity="center"
+        android:layout_centerInParent="true">
+    </RelativeLayout>
+
+
+
+    <Button
+        android:id="@+id/start_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        style="?android:buttonBarButtonStyle"
+        android:layout_alignParentBottom="true"
+        android:text="Start game"
+        android:layout_margin="8dp"
+        android:textAllCaps="false"/>
+
+
+
+
+</RelativeLayout>
