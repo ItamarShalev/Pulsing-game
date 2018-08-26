@@ -42,6 +42,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     private Handler handler;
     private Runnable runnableCreateCircles;
     private LottieAnimationView confettiAnimationLottie;
+    private boolean animationStarted;
 
     public static Bitmap loadBitmapFromView(View view) {
         try {
@@ -60,8 +61,10 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         gameStarted = false;
         startGameClicked = false;
         lastScore = readLastScore();
-        parentCircleRelativeLayout.removeAllViews();
-        addMainCircle();
+        if (animationStarted) {
+            stopAnimation();
+        }
+
     }
 
     public void updateScore() {
@@ -244,13 +247,18 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
 
     public void startGame() {
-        if (startGameClicked) {
-            startGameClicked = false;
-            parentCircleRelativeLayout.removeAllViews();
-            addMainCircle();
+        if (animationStarted) {
+            stopAnimation();
         }
         handler.post(runnableCreateCircles);
-        startGameClicked = true;
+        animationStarted = true;
+    }
+
+    private void stopAnimation(){
+        parentCircleRelativeLayout.removeAllViews();
+        handler.removeCallbacks(runnableCreateCircles);
+        addMainCircle();
+        animationStarted = false;
     }
 
 
@@ -282,6 +290,5 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     @Override
     public void updateRadius() {
         checkIfFingerOnCircle();
-
     }
 }
