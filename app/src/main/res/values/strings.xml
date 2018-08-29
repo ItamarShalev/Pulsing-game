@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">Superup</string>
     <string name="score">Score :</string>
+    <string name="message_error_more_then_one_finger">Invalid to play with more than one finger!</string>
 </resources>
