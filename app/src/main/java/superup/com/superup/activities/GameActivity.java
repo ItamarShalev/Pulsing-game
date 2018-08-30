@@ -3,6 +3,7 @@ package superup.com.superup.activities;
 import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.media.MediaPlayer;
 import android.os.Bundle;
@@ -37,15 +38,17 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
     private static final String TAG_SCORE = "TAG Score";
     private static final String TAG_MAIN_ACTIVITY = "TAG_MAIN_ACTIVITY";
     private static final int DELAY_TIME_CREATE_CIRCLE = 1000;
-    private static final int DURATION_TIME_ANIMATION_CIRCLE = 2000;
+    private static final int DURATION_TIME_ANIMATION_CIRCLE = 1600;
     private static final int COLOR_CIRCLES = Color.RED;
     private static final int TIME_ANIMATION_SUCCESS_SCORE = 4500;
     private static final int MINIMUM_HOLE_IN_CIRCLE = 1;
     private static final int MAXIMUM_HOLE_IN_CIRCLE = 3;
+    private static final int DELAY_TIME_CHECK_FINGER_ON_CIRCLE = 2;
 
     private int score, lastScore;
     private float xPosLastTouch, yPosLastTouch, maxRadius;
     private boolean isClickedToStart, isGameStarted, isAnimationStarted;
+
 
     private RelativeLayout parentCircleRelativeLayout;
     private TextView resultTextView;
@@ -55,7 +58,6 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
 
     private Handler handler;
     private Runnable runnableCreateCircles;
-    //private CheckFingerThread checkFingerThread;
     private LottieAnimationView confettiAnimationLottie;
     private int updateTime;
 
@@ -70,7 +72,9 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
         super.onCreate(savedInstanceState);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         Utils.setFullScreen(this);
-        setContentView(R.layout.activity_game);
+        View inflate = getLayoutInflater().inflate(R.layout.activity_game, null, false);
+        inflate.setOnTouchListener(this);
+        setContentView(inflate);
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
         initViews();
         initGame();
@@ -236,9 +240,9 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
      */
     @Override
     public boolean onTouch(View view, MotionEvent motionEvent) {
-        if (!isClickedToStart) {
-            return false;
-        }
+/*        if (!isClickedToStart) {
+            return true;
+        }*/
 /*        if (motionEvent.getPointerCount() > 1) {
             resultTextView.setText(R.string.message_error_more_then_one_finger);
             stopAnimation();
@@ -248,7 +252,9 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
         yPosLastTouch = motionEvent.getRawY();
         switch (motionEvent.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                checkIfFingerInCircle(view);
+                if (!isGameStarted) {
+                    checkIfFingerInCircle(view);
+                }
                 break;
             case MotionEvent.ACTION_UP:
                 if (isGameStarted) {
@@ -262,7 +268,7 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
                     checkIfFingerOnCircle();
                 }
         }
-        return false;
+        return true;
 
     }
 
@@ -275,9 +281,31 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
         if (!isGameStarted && view instanceof CircleView) {
             CircleView mainCircleView = ((CircleView) view);
             isGameStarted = mainCircleView.isContainsPoint(xPosLastTouch, yPosLastTouch);
-            if (isGameStarted) {
-                fullCircle.setOnTouchListener(null);
+            if (isGameStarted){
+            /*    new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        while (true){
+                            try {
+                                Thread.sleep(3);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            checkIfFingerOnCircle();
+                        }
+                    }
+                }).start();*/
+             /*   handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+
+                        handler.postDelayed(this,DELAY_TIME_CHECK_FINGER_ON_CIRCLE);
+                    }
+                });*/
             }
+/*            if (isGameStarted) {
+                fullCircle.setOnTouchListener(null);
+            }*/
             Log.e("Game start", "" + isGameStarted);
         }
 
@@ -290,7 +318,34 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
      * if is same color is mean user fail and call to {@link #userFail()}
      */
     private void checkIfFingerOnCircle() {
+
         if (isGameStarted) {
+            Bitmap bitmap = Utils.createBitmapFromView(parentCircleRelativeLayout);
+            if (bitmap == null) {
+                return;
+            }
+            try {
+                int pxl = bitmap.getPixel(((int) xPosLastTouch), ((int) yPosLastTouch));
+                int redComponent = Color.red(pxl);
+                int greenComponent = Color.green(pxl);
+                int blueComponent = Color.blue(pxl);
+                boolean isWhite = redComponent == 0 && greenComponent == 0 && blueComponent == 0;
+                Log.e("Itamar - color", "red : " + redComponent + " green  : " + greenComponent + " blue : " + blueComponent + " isWhite :::: " + isWhite);
+                if (!isWhite) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            userFail();
+
+                        }
+                    });
+                }
+            } catch (IllegalArgumentException e) {
+                Log.e("On touch event", "Touch in wrong area");
+
+            }
+        }
+    /*    if (isGameStarted) {
             Integer pxl = Utils.getPixelInScreen(parentCircleRelativeLayout, (int) xPosLastTouch, (int) yPosLastTouch);
             if (pxl == null) {
                 return;
@@ -299,7 +354,7 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
             if (isRed) {
                 userFail();
             }
-        }
+        }*/
 
     }
 
@@ -329,7 +384,7 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
 
 
     /**
-     * @return Broken Circle create random count hole listen to touch and add to {@link #parentCircleRelativeLayout}
+     * @return Broken CircleData create random count hole listen to touch and add to {@link #parentCircleRelativeLayout}
      */
     private CircleView createBrokenCircle() {
         int randomNumberHole = Utils.getRandomNumber(MINIMUM_HOLE_IN_CIRCLE, MAXIMUM_HOLE_IN_CIRCLE);
@@ -349,7 +404,7 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
      */
     @Override
     public void onOverRadius(CircleView circleView) {
-        Utils.shortVibratePhone(getApplicationContext());
+    //    Utils.shortVibratePhone(getApplicationContext());
         circleView.stopScaleAnimation();
         ViewGroup parent = (ViewGroup) circleView.getParent();
         if (parent != null) {

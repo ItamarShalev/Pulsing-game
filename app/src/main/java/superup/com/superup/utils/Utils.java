@@ -139,7 +139,7 @@ public class Utils {
      * @return an bitmap created from the view
      * if there was any exception return null
      */
-    private static Bitmap createBitmapFromView(@NonNull View view) {
+    public static Bitmap createBitmapFromView(@NonNull View view) {
         try {
             Bitmap bitmap = Bitmap.createBitmap(view.getWidth(), view.getHeight(), Bitmap.Config.ARGB_8888);
             Canvas canvas = new Canvas(bitmap);
@@ -238,6 +238,18 @@ public class Utils {
      */
     public static boolean isSameColor(int colorOne, int colorTwo) {
         return colorOne == colorTwo;
+    }
+
+    public static int[] divideUnevenly(int minimumSize, int count, int total) {
+        if (count == 1){
+            return new int[]{total};
+        }
+        int[] numbers = new int[count];
+        while (count > 0){
+            numbers[count-1] = getRandomNumber(minimumSize,total - (minimumSize * count));
+            count--;
+        }
+        return numbers;
     }
 
 }

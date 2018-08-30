@@ -9,15 +9,13 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
-import android.util.Log;
-import android.util.Pair;
-import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.LinearInterpolator;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
+import superup.com.superup.data.CircleData;
 import superup.com.superup.utils.AnimatorListenerEnding;
 import superup.com.superup.utils.Utils;
 
@@ -26,38 +24,39 @@ import superup.com.superup.utils.Utils;
  * 1 - drawing a whole circle, with size by radius and color stroke personal preference {@link #createFullCircle(Context, int, float)}
  * 2 - drawing a broken circle(You could call that too circle with hole - missed line),
  * color stroke and count broken line personal preference {@link #createCircleWithHole(Context, int, int)}
- * <p>
  * And built-in animation scale animation  {@link #startScaleAnimation(int, float, CircleAnimationListener)} {@link #stopScaleAnimation()}
  */
 @SuppressLint("ViewConstructor")
-public class CircleView extends View {
+public class CircleView extends ViewGroup {
 
-    private static final int MAX_ANGELS = 180;
-    private static final int COUNT_SIDE_ANGEL = 6;
+    private static final int MAX_ANGELS = 360;
 
-    private static final int SIZE_SIDE_ANGEL = MAX_ANGELS / COUNT_SIDE_ANGEL;
+    //private static final int COUNT_SIDE_ANGEL = 4;
 
-    private static final int MINIMUM_TOUCH = SIZE_SIDE_ANGEL;
+    //private static final int SIZE_SIDE_ANGEL = MAX_ANGELS / COUNT_SIDE_ANGEL;
 
-    private static final int MAXIMUM_TOUCH = SIZE_SIDE_ANGEL;
+    private static final int MINIMUM_HOLE = 25;
+
+    private static final int MAXIMUM_HOLE = 35;
+
+    private static final int MINIMUM_PIECE = 50;
 
     private boolean isBrokenCircle, isCancelAnimation, isPrinted;
     private int colorStroke, countHoleLine, sizeStrokeWidth;
     private float radius;
 
     private CircleAnimationListener listener;
-    private List<Pair[]> pairOfPositionLine;
-    private List<Integer> integersArea;
     private Canvas canvas;
     private Paint paint;
     private RectF rect;
     private ValueAnimator animator;
+    private List<CircleData> circleDataList;
 
 
     /**
      * @param isBrokenCircle if you want circle with hole the input need to be true, else if you want a whole circle so false
      * @param colorStroke    the color of the stroke on the circle
-     * @param countHoleLine  if you want circle with hole so some holes you want (min value : 0, max value {@value COUNT_SIDE_ANGEL})
+     * @param countHoleLine  if you want circle with hole so some holes you want (min value : 0, max value 3)
      * @param radius         the radius of circle you want
      * @see #CircleView(Context, boolean, int, int, float)
      */
@@ -68,18 +67,16 @@ public class CircleView extends View {
         this.countHoleLine = countHoleLine;
         this.radius = radius;
         this.sizeStrokeWidth = 11;
-        setBackgroundColor(Color.TRANSPARENT);
-        integersArea = new ArrayList<>();
-        for (int i = 1; i <= COUNT_SIDE_ANGEL; i++) {
-            integersArea.add(i);
+        if (countHoleLine > 0) {
+            this.circleDataList = getPositionLine(countHoleLine);
         }
-        Collections.shuffle(integersArea);
+        setBackgroundColor(Color.TRANSPARENT);
     }
 
     /**
      * @param colorStroke   the color of the stroke on the circle
-     * @param countHoleLine if you want circle with hole so some holes you want (min value : 0, max value {@value COUNT_SIDE_ANGEL})
-     * @return Circle with Hole (Missed line)
+     * @param countHoleLine if you want circle with hole so some holes you want (min value : 0, max value 3)
+     * @return CircleData with Hole (Missed line)
      * @see #CircleView(Context, boolean, int, int, float)
      */
     public static CircleView createCircleWithHole(Context context, int colorStroke, int countHoleLine) {
@@ -101,43 +98,44 @@ public class CircleView extends View {
      * index 0 (NonNull) is where need to draw line first is where need to start drawing, second is where need to stop drawing the line
      * index 1 (Nullable) for where do not draw the line,  first is where the hole is start, second is where the hole stop
      */
-    private List<Pair[]> getPositionLine(int countHoleLine) {
-
-        Pair<Integer, Integer> locationLine;
-        Pair<Integer, Integer> locationHole = null;
-
-        Pair[] o = null;
-        List<Pair[]> list = new ArrayList<>(Collections.nCopies(COUNT_SIDE_ANGEL, o));
-
-        while (integersArea.size() > 0) {
-            int randomArea = getRandomArea();
-
-            int startLine = randomArea != 1 ? (randomArea - 1) * SIZE_SIDE_ANGEL : 0;
-            int stopLine = (randomArea) * SIZE_SIDE_ANGEL;
-
-            locationLine = new Pair<>(startLine, stopLine);
-
-            if (countHoleLine > 0) {
-                countHoleLine -= 1;
-                int touchSize = Utils.getRandomNumber(MINIMUM_TOUCH, MAXIMUM_TOUCH);
-                int startHole = Utils.getRandomNumber(startLine, stopLine - touchSize);
-                int stopHole = startHole + touchSize;
-
-                locationHole = new Pair<>(startHole, stopHole);
-            }
-            list.set(randomArea - 1, new Pair[]{locationLine, locationHole});
-            locationHole = null;
+    private List<CircleData> getPositionLine(int countHoleLine) {
+        countHoleLine = 2;
+        List<CircleData> circleDataList = new ArrayList<>();
+        int holeLength;
+        int sweepAngle = 0;
+        int startAngel;
+        if (countHoleLine == 1) {
+            startAngel  = Utils.getRandomNumber(0, MAX_ANGELS);
+        }else{
+            startAngel = 0;
         }
-        return list;
-    }
 
+        int[] holes = new int[countHoleLine];
+        int totalSizeHoles = 0;
 
-    /**
-     * @return random value of area from a circle by {@value COUNT_SIDE_ANGEL}
-     */
-    private int getRandomArea() {
-        int position = Utils.getRandomNumber(0, integersArea.size() - 1);
-        return integersArea.remove(position);
+        for (int i = 0; i < holes.length; i++) {
+            holes[i] = Utils.getRandomNumber(MINIMUM_HOLE, MAXIMUM_HOLE);
+            totalSizeHoles += holes[i];
+        }
+
+        int[] lines = Utils.divideUnevenly(MINIMUM_PIECE, countHoleLine, MAX_ANGELS - totalSizeHoles);
+        int firstStartAngel = startAngel;
+
+        for (int i = 0; i < countHoleLine; i++) {
+            sweepAngle = lines[i];
+/*
+            removeLeftHole = totalSizeHoles + (countHoleLine - i) * MINIMUM_PIECE;
+            max = maxCircle - removeLeftHole;
+            sweepAngle = Utils.getRandomNumber(startAngel, max);*/
+            circleDataList.add(new CircleData(startAngel, sweepAngle));
+
+            holeLength = holes[i];
+            startAngel = (sweepAngle + holeLength);
+        }
+
+        //circleDataList.add(new CircleData(startAngel + sweepAngle,360 - firstStartAngel));
+
+        return circleDataList;
     }
 
 
@@ -145,41 +143,20 @@ public class CircleView extends View {
      * Drawing circle with hole (missing row)
      */
     private void drawBrokenCircle() {
-        if (pairOfPositionLine == null) {
-            pairOfPositionLine = getPositionLine(countHoleLine);
+      /*  if (circleDataList == null) {
+            circleDataList = getPositionLine(countHoleLine);
+        }*/
+        for (CircleData circleData : circleDataList) {
+            canvas.drawArc(rect, circleData.getStartAngle(), circleData.getSweepAngle(), false, paint);
+
         }
 
-        for (Pair[] integerIntegerPair : pairOfPositionLine) {
-            Pair<Integer, Integer> locationLine = integerIntegerPair[0];
-            Pair<Integer, Integer> locationHole = integerIntegerPair.length == 2 ? integerIntegerPair[1] : null;
-
-            if (locationHole == null) {
-                canvas.drawArc(rect, locationLine.first, locationLine.second, false, paint);
-            } else {
-                if (!isPrinted) {
-                    Log.e("Number Hole", " " + countHoleLine);
-                    Log.e("First Line", "from : " + locationLine.first + " To : " + locationHole.first);
-                    Log.e("Second Line", "from : " + locationHole.second + " To : " + locationLine.second);
-                }
-
-                if (locationHole.first.equals(locationLine.first)) {
-                    canvas.drawArc(rect, locationHole.second, locationLine.second, false, paint);
-                } else if (locationHole.second.equals(locationLine.second)) {
-                    canvas.drawArc(rect, locationLine.first, locationHole.first, false, paint);
-                } else {
-                    canvas.drawArc(rect, locationLine.first, locationHole.first, false, paint);
-                    canvas.drawArc(rect, locationHole.second, locationLine.second, false, paint);
-                }
-
-            }
-        }
-        isPrinted = true;
     }
 
     /**
      * @return paint for Draw circle
      */
-    private Paint getPaint() {
+    private Paint createPaint() {
         Paint paint = new Paint();
         paint.setStyle(Paint.Style.STROKE);
         paint.setStrokeWidth(sizeStrokeWidth);
@@ -193,12 +170,14 @@ public class CircleView extends View {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         this.canvas = canvas;
-        paint = getPaint();
-        rect = getRect(getWidth(), getHeight());
+        paint = createPaint();
+        rect = createRectF(getWidth(), getHeight());
         if (!isBrokenCircle) {
             drawFullCircle();
         } else {
-            drawBrokenCircle();
+            synchronized (this) {
+                drawBrokenCircle();
+            }
         }
     }
 
@@ -224,7 +203,7 @@ public class CircleView extends View {
      * @param height of view
      * @return RectF for draw a circle
      */
-    private RectF getRect(int width, int height) {
+    private RectF createRectF(int width, int height) {
         float center_x = width / 2;
         float center_y = height / 2;
 
@@ -283,6 +262,11 @@ public class CircleView extends View {
         }
     }
 
+    @Override
+    protected void onLayout(boolean changed, int l, int t, int r, int b) {
+
+    }
+
     /**
      * Listener when you use scale animation and want to ger result
      */
@@ -298,5 +282,4 @@ public class CircleView extends View {
          */
         void onUpdateRadius();
     }
-
 }
