@@ -31,18 +31,14 @@ public class CircleView extends ViewGroup {
 
     private static final int MAX_ANGELS = 360;
 
-    //private static final int COUNT_SIDE_ANGEL = 4;
-
-    //private static final int SIZE_SIDE_ANGEL = MAX_ANGELS / COUNT_SIDE_ANGEL;
-
     private static final int MINIMUM_HOLE = 25;
 
     private static final int MAXIMUM_HOLE = 35;
 
     private static final int MINIMUM_PIECE = 50;
 
-    private boolean isBrokenCircle, isCancelAnimation, isPrinted;
-    private int colorStroke, countHoleLine, sizeStrokeWidth;
+    private boolean isBrokenCircle, isCancelAnimation;
+    private int colorStroke, sizeStrokeWidth;
     private float radius;
 
     private CircleAnimationListener listener;
@@ -64,7 +60,6 @@ public class CircleView extends ViewGroup {
         super(context);
         this.isBrokenCircle = isBrokenCircle;
         this.colorStroke = colorStroke;
-        this.countHoleLine = countHoleLine;
         this.radius = radius;
         this.sizeStrokeWidth = 11;
         if (countHoleLine > 0) {
@@ -94,19 +89,16 @@ public class CircleView extends ViewGroup {
 
     /**
      * @param countHoleLine count of holes draw on the circle
-     * @return List of pair array , all pair array can be hold 2,
-     * index 0 (NonNull) is where need to draw line first is where need to start drawing, second is where need to stop drawing the line
-     * index 1 (Nullable) for where do not draw the line,  first is where the hole is start, second is where the hole stop
+     * @return List of CircleData {@link CircleData} size by countHoleLine
      */
     private List<CircleData> getPositionLine(int countHoleLine) {
-        countHoleLine = 2;
         List<CircleData> circleDataList = new ArrayList<>();
         int holeLength;
-        int sweepAngle = 0;
+        int sweepAngle;
         int startAngel;
         if (countHoleLine == 1) {
-            startAngel  = Utils.getRandomNumber(0, MAX_ANGELS);
-        }else{
+            startAngel = Utils.getRandomNumber(0, MAX_ANGELS);
+        } else {
             startAngel = 0;
         }
 
@@ -119,21 +111,14 @@ public class CircleView extends ViewGroup {
         }
 
         int[] lines = Utils.divideUnevenly(MINIMUM_PIECE, countHoleLine, MAX_ANGELS - totalSizeHoles);
-        int firstStartAngel = startAngel;
 
         for (int i = 0; i < countHoleLine; i++) {
             sweepAngle = lines[i];
-/*
-            removeLeftHole = totalSizeHoles + (countHoleLine - i) * MINIMUM_PIECE;
-            max = maxCircle - removeLeftHole;
-            sweepAngle = Utils.getRandomNumber(startAngel, max);*/
             circleDataList.add(new CircleData(startAngel, sweepAngle));
-
             holeLength = holes[i];
             startAngel = (sweepAngle + holeLength);
         }
 
-        //circleDataList.add(new CircleData(startAngel + sweepAngle,360 - firstStartAngel));
 
         return circleDataList;
     }

@@ -43,7 +43,6 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
     private static final int TIME_ANIMATION_SUCCESS_SCORE = 4500;
     private static final int MINIMUM_HOLE_IN_CIRCLE = 1;
     private static final int MAXIMUM_HOLE_IN_CIRCLE = 3;
-    private static final int DELAY_TIME_CHECK_FINGER_ON_CIRCLE = 2;
 
     private int score, lastScore;
     private float xPosLastTouch, yPosLastTouch, maxRadius;
@@ -281,7 +280,7 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
         if (!isGameStarted && view instanceof CircleView) {
             CircleView mainCircleView = ((CircleView) view);
             isGameStarted = mainCircleView.isContainsPoint(xPosLastTouch, yPosLastTouch);
-            if (isGameStarted){
+            if (isGameStarted) {
             /*    new Thread(new Runnable() {
                     @Override
                     public void run() {
@@ -404,7 +403,7 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
      */
     @Override
     public void onOverRadius(CircleView circleView) {
-    //    Utils.shortVibratePhone(getApplicationContext());
+        //    Utils.shortVibratePhone(getApplicationContext());
         circleView.stopScaleAnimation();
         ViewGroup parent = (ViewGroup) circleView.getParent();
         if (parent != null) {
